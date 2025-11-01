@@ -1,80 +1,17 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import styles from './page.module.css'
-
-interface AnalysisResults {
-  transcription: string
-  mood: string | null
-  sentiment: string
-  summary: string
-}
 
 export default function Home() {
   const [isRecording, setIsRecording] = useState(false)
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [results, setResults] = useState<AnalysisResults | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [paymentSuccess, setPaymentSuccess] = useState(false)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
-  const runMoodAnalysis = async (transcription: string) => {
-    setIsProcessing(true)
-    setError(null)
-
-    try {
-      console.log('[Payment] Running mood analysis after payment...')
-      const moodRes = await fetch('/api/agents/mood', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcription }),
-      })
-
-      const mood = await moodRes.json()
-
-      // Update results with mood
-      setResults(prev => prev ? {
-        ...prev,
-        mood: mood.mood
-      } : null)
-      
-      // Clear the stored transcription
-      localStorage.removeItem('pendingTranscription')
-      localStorage.removeItem('pendingMoodPayment')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Mood analysis failed')
-      console.error('Mood analysis error:', err)
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  // Check if returning from payment
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const paymentCompleted = urlParams.get('payment') === 'success'
-    
-    if (paymentCompleted) {
-      setPaymentSuccess(true)
-      const pendingTranscription = localStorage.getItem('pendingTranscription')
-      const isPendingMood = localStorage.getItem('pendingMoodPayment') === 'true'
-      
-      if (pendingTranscription && isPendingMood) {
-        console.log('[Payment] Payment successful, running mood analysis...')
-        // Run only mood analysis with the stored transcription
-        runMoodAnalysis(pendingTranscription)
-      } else {
-        console.warn('[Payment] Payment successful but no transcription found or not for mood')
-      }
-      
-      // Clean up URL
-      window.history.replaceState({}, '', '/')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // No useEffect needed on home page anymore - payment flow moved to /result
 
   const startRecording = async () => {
     try {
@@ -91,14 +28,21 @@ export default function Home() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        setAudioBlob(audioBlob)
+        audioChunksRef.current = []
+        
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.log('[RECORDING] Recording stopped')
+        console.log('[RECORDING] Audio blob size:', (audioBlob.size / 1024).toFixed(2), 'KB')
+        console.log('[RECORDING] Processing and redirecting to payment...')
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        
+        processAudioAndRedirect(audioBlob)
         stream.getTracks().forEach(track => track.stop())
       }
 
       mediaRecorder.start()
       setIsRecording(true)
       setError(null)
-      setResults(null)
     } catch (err) {
       setError('Failed to access microphone. Please grant permission.')
       console.error('Error accessing microphone:', err)
@@ -112,17 +56,16 @@ export default function Home() {
     }
   }
 
-  const processAudio = async () => {
-    if (!audioBlob) return
-
+  const processAudioAndRedirect = async (audioBlob: Blob) => {
     setIsProcessing(true)
     setError(null)
 
     try {
-      // First, transcribe the audio
       const formData = new FormData()
       formData.append('audio', audioBlob, 'recording.webm')
 
+      console.log('[TRANSCRIPTION] Sending audio to Whisper API...')
+      
       const transcriptionResponse = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData,
@@ -135,49 +78,38 @@ export default function Home() {
 
       const { transcription } = await transcriptionResponse.json()
 
-      // Store transcription for potential mood payment later
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('[TRANSCRIPTION] Success!')
+      console.log('[TRANSCRIPTION] Transcription length:', transcription.length)
+      console.log('[TRANSCRIPTION] Storing in localStorage...')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
+      // Store transcription for after-payment processing
       localStorage.setItem('pendingTranscription', transcription)
+      localStorage.setItem('pendingPayment', 'true')
 
-      // Run sentiment and summary agents immediately (FREE)
-      const [sentimentRes, summaryRes] = await Promise.all([
-        fetch('/api/agents/sentiment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcription }),
-        }),
-        fetch('/api/agents/summary', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcription }),
-        }),
-      ])
-
-      const sentiment = await sentimentRes.json()
-      const summary = await summaryRes.json()
-
-      // Set results with mood as null (requires payment)
-      setResults({
-        transcription,
-        mood: null,
-        sentiment: sentiment.sentiment,
-        summary: summary.summary,
-      })
+      // Redirect to Stripe payment
+      const stripeUrl = 'https://buy.stripe.com/test_3cI3cwc7Rasl18U4ToeAg00'
+      
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('[STRIPE] Redirecting to payment page')
+      console.log('[STRIPE] Timestamp:', new Date().toISOString())
+      console.log('[STRIPE] Payment URL:', stripeUrl)
+      console.log('[STRIPE] Expected return URL: http://localhost:3000/result')
+      console.log('[STRIPE] Transcription stored: ✓')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      
+      window.location.href = stripeUrl
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Processing failed')
-      console.error('Processing error:', err)
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to process audio')
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.error('[ERROR] Processing failed:', err)
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       setIsProcessing(false)
     }
   }
 
-  const handleMoodPayment = () => {
-    // Mark that we're waiting for mood payment
-    localStorage.setItem('pendingMoodPayment', 'true')
-    console.log('[Payment] Redirecting to Stripe TEST payment page for mood analysis...')
-    
-    // Redirect to Stripe TEST payment link
-    window.location.href = 'https://buy.stripe.com/test_3cI3cwc7Rasl18U4ToeAg00'
-  }
+  // handleMoodPayment removed - payment now happens immediately after recording
 
   return (
     <main className={styles.main}>
@@ -205,15 +137,6 @@ export default function Home() {
             </button>
           )}
 
-          {audioBlob && !isRecording && (
-            <button
-              onClick={processAudio}
-              className={`${styles.button} ${styles.processButton}`}
-              disabled={isProcessing}
-            >
-              {isProcessing ? '⏳ Processing...' : '✨ Analyze Recording'}
-            </button>
-          )}
         </div>
 
         {isRecording && (
@@ -223,57 +146,16 @@ export default function Home() {
           </div>
         )}
 
-        {paymentSuccess && !results && (
-          <div className={styles.successMessage}>
-            ✅ Payment successful! Analyzing your recording...
+        {isProcessing && (
+          <div className={styles.processing}>
+            <div className={styles.loader}></div>
+            <p>Transcribing audio... You will be redirected to payment.</p>
           </div>
         )}
 
         {error && (
           <div className={styles.error}>
             ⚠️ {error}
-          </div>
-        )}
-
-        {results && (
-          <div className={styles.results}>
-            <div className={styles.resultCard}>
-              <h2>📝 Transcription</h2>
-              <p>{results.transcription}</p>
-            </div>
-
-            <div className={styles.agentResults}>
-              <div className={styles.agentCard}>
-                <h3>😊 Mood Analysis</h3>
-                {results.mood ? (
-                  <p>{results.mood}</p>
-                ) : (
-                  <div className={styles.paymentRequired}>
-                    <p className={styles.lockMessage}>🔒 Premium Feature</p>
-                    <p className={styles.payDescription}>
-                      Unlock detailed mood analysis to understand the emotional tone of your recording.
-                    </p>
-                    <button
-                      onClick={handleMoodPayment}
-                      className={styles.payButton}
-                      disabled={isProcessing}
-                    >
-                      💳 Pay to Unlock Mood Analysis
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.agentCard}>
-                <h3>💭 Sentiment Analysis</h3>
-                <p>{results.sentiment}</p>
-              </div>
-
-              <div className={styles.agentCard}>
-                <h3>📋 Summary</h3>
-                <p>{results.summary}</p>
-              </div>
-            </div>
           </div>
         )}
 
