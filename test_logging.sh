@@ -1,0 +1,31 @@
+#!/bin/bash
+
+echo "🎤 Testing Voice Recording App with Logging..."
+echo ""
+echo "Please follow these steps to test:"
+echo ""
+echo "1. Open your browser to: http://localhost:3000"
+echo "2. Click 'Start Recording'"
+echo "3. Speak: 'Hello, I'm testing the amazing logging system. This is so cool!'"
+echo "4. Click 'Stop Recording'"
+echo "5. Click 'Analyze Recording'"
+echo ""
+echo "Then watch THIS terminal for detailed logs!"
+echo ""
+echo "You should see:"
+echo "  ✓ [INFO] [Whisper] Transcription request received"
+echo "  ✓ [INFO] [Whisper] Starting OpenAI Whisper API call"
+echo "  ✓ [INFO] [Whisper] OpenAI Whisper API call completed (with duration)"
+echo "  ✓ [INFO] [MoodAgent] GPT-4 mood analysis completed (with duration)"
+echo "  ✓ [INFO] [SentimentAgent] GPT-4 sentiment analysis completed (with duration)"
+echo "  ✓ [INFO] [SummaryAgent] GPT-4 summary generation completed (with duration)"
+echo ""
+echo "📊 After testing, check the log file:"
+echo "  cat logs/app-$(date +%Y-%m-%d).log"
+echo ""
+echo "Press Ctrl+C to exit this script"
+echo ""
+echo "Waiting for your test..."
+
+# Keep script running
+tail -f /dev/null
