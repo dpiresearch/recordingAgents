@@ -10,7 +10,7 @@ A powerful web application that records voice through your laptop, transcribes i
 - 💭 **Sentiment Detection**: Analyzes emotional state (nervous, happy, sad, etc.)
 - 📋 **Smart Summarization**: Automatically generates concise summaries
 - 📊 **Comprehensive Logging**: Track all API calls, response times, and errors
-- 💳 **Stripe Ready**: Placeholders for payment integration (future monetization)
+- 💳 **Stripe Payment Integration**: Payment required before mood analysis results
 - 🚀 **Vercel Optimized**: Deploy with one click
 
 ## Architecture

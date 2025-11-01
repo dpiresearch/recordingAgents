@@ -101,6 +101,19 @@
   margin: 1rem 0;
 }
 
+.successMessage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #d4edda;
+  border-radius: 10px;
+  color: #155724;
+  font-weight: 600;
+  margin: 1rem 0;
+  border: 1px solid #c3e6cb;
+}
+
 .pulse {
   width: 12px;
   height: 12px;
@@ -181,6 +194,53 @@
 .agentCard p {
   color: #666;
   line-height: 1.6;
+}
+
+.paymentRequired {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  min-height: 150px;
+}
+
+.lockMessage {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.payDescription {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.payButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.payButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.payButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .footer {
