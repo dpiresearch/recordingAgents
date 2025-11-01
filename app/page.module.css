@@ -243,6 +243,30 @@
   cursor: not-allowed;
 }
 
+.freeFeature {
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.freeBadge {
+  display: inline-block;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.secondaryButton {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+.secondaryButton:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+
 .footer {
   text-align: center;
   margin-top: 3rem;

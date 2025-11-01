@@ -84,22 +84,17 @@ export default function Home() {
       console.log('[TRANSCRIPTION] Storing in localStorage...')
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
-      // Store transcription for after-payment processing
+      // Store transcription for prepay page
       localStorage.setItem('pendingTranscription', transcription)
-      localStorage.setItem('pendingPayment', 'true')
-
-      // Redirect to Stripe payment
-      const stripeUrl = 'https://buy.stripe.com/test_3cI3cwc7Rasl18U4ToeAg00'
       
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.log('[STRIPE] Redirecting to payment page')
-      console.log('[STRIPE] Timestamp:', new Date().toISOString())
-      console.log('[STRIPE] Payment URL:', stripeUrl)
-      console.log('[STRIPE] Expected return URL: http://localhost:3000/result')
-      console.log('[STRIPE] Transcription stored: ✓')
+      console.log('[NAVIGATION] Redirecting to preview page')
+      console.log('[NAVIGATION] Timestamp:', new Date().toISOString())
+      console.log('[NAVIGATION] Target: /prepay')
+      console.log('[NAVIGATION] Transcription stored: ✓')
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       
-      window.location.href = stripeUrl
+      window.location.href = '/prepay'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process audio')
       console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

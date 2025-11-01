@@ -39,13 +39,13 @@ export default function ResultPage() {
 
       // Check for pending transcription
       const pendingTranscription = localStorage.getItem('pendingTranscription')
-      const isPendingPayment = localStorage.getItem('pendingPayment') === 'true'
+      const isPendingMoodPayment = localStorage.getItem('pendingMoodPayment') === 'true'
 
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       console.log('[RESULT PAGE] Checking localStorage')
       console.log('[RESULT PAGE] Pending transcription exists:', !!pendingTranscription)
       console.log('[RESULT PAGE] Transcription length:', pendingTranscription?.length || 0)
-      console.log('[RESULT PAGE] Pending payment flag:', isPendingPayment)
+      console.log('[RESULT PAGE] Pending mood payment flag:', isPendingMoodPayment)
       console.log('[RESULT PAGE] Stripe session ID:', stripeSessionId || 'none')
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
@@ -118,7 +118,7 @@ export default function ResultPage() {
         // Clean up localStorage
         console.log('[RESULT PAGE] Cleaning up localStorage')
         localStorage.removeItem('pendingTranscription')
-        localStorage.removeItem('pendingPayment')
+        localStorage.removeItem('pendingMoodPayment')
         
         // Clean up URL
         console.log('[RESULT PAGE] Cleaning up URL (removing query parameters)')
