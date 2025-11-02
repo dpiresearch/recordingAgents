@@ -9,6 +9,8 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   const requestId = `req_${Date.now()}`
   
+  // Dual logging for Vercel
+  console.log('[Whisper API] Request received', { requestId, timestamp: new Date().toISOString() })
   logger.info('Whisper', 'Transcription request received', undefined, { requestId })
 
   try {
@@ -24,9 +26,10 @@ export async function POST(request: NextRequest) {
     const audioFile = formData.get('audio') as File
 
     if (!audioFile) {
+      console.error('[Whisper API] No audio file provided', { requestId })
       logger.warn('Whisper', 'No audio file provided in request', { requestId })
       return NextResponse.json(
-        { error: 'No audio file provided' },
+        { error: 'No audio file provided', requestId },
         { status: 400 }
       )
     }
@@ -51,6 +54,12 @@ export async function POST(request: NextRequest) {
 
     const transcriptionLength = transcription.text.length
 
+    console.log('[Whisper API] Success', {
+      requestId,
+      transcriptionLength,
+      duration,
+    })
+
     logger.info('Whisper', 'OpenAI Whisper API call completed successfully', duration, {
       requestId,
       transcriptionLength,
@@ -61,6 +70,14 @@ export async function POST(request: NextRequest) {
       transcription: transcription.text,
     })
   } catch (error: any) {
+    console.error('[Whisper API] Error:', {
+      requestId,
+      error: error?.message || 'Unknown error',
+      errorStatus: error?.status,
+      errorCode: error?.code,
+      timestamp: new Date().toISOString(),
+    })
+
     logger.error('Whisper', 'Transcription failed', error, {
       requestId,
       errorStatus: error?.status,
@@ -69,13 +86,13 @@ export async function POST(request: NextRequest) {
     
     if (error?.status === 401) {
       return NextResponse.json(
-        { error: 'Invalid OpenAI API key. Please check your credentials.' },
+        { error: 'Invalid OpenAI API key. Please check your credentials.', requestId },
         { status: 401 }
       )
     }
 
     return NextResponse.json(
-      { error: error?.message || 'Failed to transcribe audio' },
+      { error: error?.message || 'Failed to transcribe audio', requestId },
       { status: 500 }
     )
   }

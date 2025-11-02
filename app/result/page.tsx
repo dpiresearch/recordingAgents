@@ -92,13 +92,43 @@ export default function ResultPage() {
           }),
         ])
 
+        console.log('[RESULT PAGE] Mood response status:', moodRes.status)
+        console.log('[RESULT PAGE] Sentiment response status:', sentimentRes.status)
+        console.log('[RESULT PAGE] Summary response status:', summaryRes.status)
+
         if (!moodRes.ok || !sentimentRes.ok || !summaryRes.ok) {
-          throw new Error('One or more agent requests failed')
+          const errors = []
+          if (!moodRes.ok) {
+            const text = await moodRes.text()
+            console.error('[RESULT PAGE] Mood error:', text.substring(0, 500))
+            errors.push('mood')
+          }
+          if (!sentimentRes.ok) {
+            const text = await sentimentRes.text()
+            console.error('[RESULT PAGE] Sentiment error:', text.substring(0, 500))
+            errors.push('sentiment')
+          }
+          if (!summaryRes.ok) {
+            const text = await summaryRes.text()
+            console.error('[RESULT PAGE] Summary error:', text.substring(0, 500))
+            errors.push('summary')
+          }
+          throw new Error(`Agent requests failed: ${errors.join(', ')}`)
         }
 
-        const mood = await moodRes.json()
-        const sentiment = await sentimentRes.json()
-        const summary = await summaryRes.json()
+        let mood, sentiment, summary
+        try {
+          mood = await moodRes.json()
+          sentiment = await sentimentRes.json()
+          summary = await summaryRes.json()
+          
+          if (!mood.mood || !sentiment.sentiment || !summary.summary) {
+            throw new Error('Missing data in one or more responses')
+          }
+        } catch (e) {
+          console.error('[RESULT PAGE] Failed to parse agent responses:', e)
+          throw new Error('Invalid response from AI agents')
+        }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
         console.log('[RESULT PAGE] ✅ All analyses completed successfully!')

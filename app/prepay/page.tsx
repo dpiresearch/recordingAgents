@@ -58,12 +58,36 @@ export default function PrepayPage() {
           }),
         ])
 
+        console.log('[PREPAY PAGE] Sentiment response status:', sentimentRes.status)
+        console.log('[PREPAY PAGE] Summary response status:', summaryRes.status)
+
         if (!sentimentRes.ok || !summaryRes.ok) {
-          throw new Error('One or more agent requests failed')
+          const errors = []
+          if (!sentimentRes.ok) {
+            const text = await sentimentRes.text()
+            console.error('[PREPAY PAGE] Sentiment error:', text.substring(0, 500))
+            errors.push('sentiment')
+          }
+          if (!summaryRes.ok) {
+            const text = await summaryRes.text()
+            console.error('[PREPAY PAGE] Summary error:', text.substring(0, 500))
+            errors.push('summary')
+          }
+          throw new Error(`Agent requests failed: ${errors.join(', ')}`)
         }
 
-        const sentiment = await sentimentRes.json()
-        const summary = await summaryRes.json()
+        let sentiment, summary
+        try {
+          sentiment = await sentimentRes.json()
+          summary = await summaryRes.json()
+          
+          if (!sentiment.sentiment || !summary.summary) {
+            throw new Error('Missing data in responses')
+          }
+        } catch (e) {
+          console.error('[PREPAY PAGE] Failed to parse agent responses:', e)
+          throw new Error('Invalid response from AI agents')
+        }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
         console.log('[PREPAY PAGE] ✅ Free analyses completed!')

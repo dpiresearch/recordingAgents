@@ -71,12 +71,34 @@ export default function Home() {
         body: formData,
       })
 
+      console.log('[TRANSCRIPTION] Response status:', transcriptionResponse.status)
+
       if (!transcriptionResponse.ok) {
-        const errorData = await transcriptionResponse.json()
-        throw new Error(errorData.error || 'Transcription failed')
+        let errorMessage = 'Transcription failed'
+        try {
+          const errorData = await transcriptionResponse.json()
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          console.error('[TRANSCRIPTION] Failed to parse error response:', e)
+          const text = await transcriptionResponse.text()
+          console.error('[TRANSCRIPTION] Raw error response:', text.substring(0, 500))
+        }
+        throw new Error(errorMessage)
       }
 
-      const { transcription } = await transcriptionResponse.json()
+      let transcription: string
+      try {
+        const data = await transcriptionResponse.json()
+        transcription = data.transcription
+        if (!transcription) {
+          throw new Error('No transcription in response')
+        }
+      } catch (e) {
+        console.error('[TRANSCRIPTION] Failed to parse JSON response:', e)
+        const text = await transcriptionResponse.text()
+        console.error('[TRANSCRIPTION] Raw response:', text.substring(0, 500))
+        throw new Error('Invalid response from transcription service')
+      }
 
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       console.log('[TRANSCRIPTION] Success!')
